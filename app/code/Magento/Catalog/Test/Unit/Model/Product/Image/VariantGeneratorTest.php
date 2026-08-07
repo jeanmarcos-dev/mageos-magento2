@@ -69,6 +69,7 @@ class VariantGeneratorTest extends TestCase
         $saved = [];
         $qualities = [];
         $adapter = $this->createMock(Gd2::class);
+        $adapter->method('supportsOutputFormat')->willReturn(true);
         $adapter->method('setOutputFormat');
         $adapter->method('quality')->willReturnCallback(function ($q) use (&$qualities) {
             $qualities[] = $q;
@@ -105,6 +106,7 @@ class VariantGeneratorTest extends TestCase
 
         $saved = [];
         $adapter = $this->createMock(Gd2::class);
+        $adapter->method('supportsOutputFormat')->willReturn(true);
         $adapter->method('save')->willReturnCallback(function ($path) use (&$saved) {
             $saved[] = $path;
         });
@@ -156,6 +158,36 @@ class VariantGeneratorTest extends TestCase
         $this->assertSame([], $this->generator->execute('/media/cache/x/foo.jpg'));
     }
 
+    public function testAnUnencodableFormatNeverOpensTheSourceImage(): void
+    {
+        $this->config->method('getEnabledFormats')->willReturn(['avif']);
+
+        $adapter = $this->createMock(Gd2::class);
+        $adapter->method('supportsOutputFormat')->willReturn(false);
+        // Opening decodes the whole image; a build without the codec must not pay that per image.
+        $adapter->expects($this->never())->method('open');
+        $adapter->expects($this->never())->method('save');
+        $this->adapterFactory->method('create')->willReturn($adapter);
+
+        $this->assertSame([], $this->generator->execute('/media/cache/x/foo.jpg'));
+    }
+
+    public function testTheUnencodableWarningIsLoggedOncePerFormat(): void
+    {
+        $this->config->method('getEnabledFormats')->willReturn(['avif']);
+
+        $adapter = $this->createMock(Gd2::class);
+        $adapter->method('supportsOutputFormat')->willReturn(false);
+        $this->adapterFactory->method('create')->willReturn($adapter);
+
+        // Three images, one warning: the message is about the build, not about each file.
+        $this->logger->expects($this->once())->method('warning');
+
+        $this->generator->execute('/media/cache/x/a.jpg');
+        $this->generator->execute('/media/cache/x/b.jpg');
+        $this->generator->execute('/media/cache/x/c.jpg');
+    }
+
     public function testOneFailingFormatDoesNotStopTheOthers(): void
     {
         $this->config->method('getEnabledFormats')->willReturn(['avif', 'webp']);
@@ -163,16 +195,14 @@ class VariantGeneratorTest extends TestCase
 
         $adapter = $this->createMock(Gd2::class);
         // A GD build without libavif rejects AVIF but still handles WebP.
-        $adapter->method('setOutputFormat')->willReturnCallback(function ($format) {
-            if ($format === 'avif') {
-                throw new \InvalidArgumentException('Unsupported image format.');
-            }
-        });
+        $adapter->method('supportsOutputFormat')->willReturnCallback(
+            static fn (string $format): bool => $format !== 'avif'
+        );
         $this->adapterFactory->method('create')->willReturn($adapter);
 
         $this->logger->expects($this->once())
             ->method('warning')
-            ->with($this->stringContains('Could not generate the AVIF variant'));
+            ->with($this->stringContains('cannot encode AVIF'));
 
         $this->assertSame(['/media/cache/x/foo.jpg.webp'], $this->generator->execute('/media/cache/x/foo.jpg'));
     }

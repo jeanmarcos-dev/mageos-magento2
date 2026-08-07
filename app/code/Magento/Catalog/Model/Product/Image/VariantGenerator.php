@@ -42,6 +42,13 @@ class VariantGenerator
     private $logger;
 
     /**
+     * Formats already reported as unencodable, so the warning is logged once rather than per image
+     *
+     * @var array<string, true>
+     */
+    private $unsupportedFormats = [];
+
+    /**
      * @param AdapterFactory $adapterFactory
      * @param VariantConfig $config
      * @param FormatProviderInterface $formatProvider
@@ -111,6 +118,14 @@ class VariantGenerator
                 return null;
             }
 
+            // Opening the source decodes it in full, so ask first: a build without the codec would
+            // otherwise pay that decode for every image only to fail on save.
+            if (!$adapter->supportsOutputFormat($format)) {
+                $this->reportUnsupported($format);
+
+                return null;
+            }
+
             $adapter->open($imagePath);
             $adapter->setOutputFormat($format);
             $adapter->quality($this->config->getQuality($format));
@@ -131,5 +146,27 @@ class VariantGenerator
         }
 
         return $variantPath;
+    }
+
+    /**
+     * Warn once per format that this installation cannot encode it
+     *
+     * @param string $format
+     * @return void
+     */
+    private function reportUnsupported(string $format): void
+    {
+        if (isset($this->unsupportedFormats[$format])) {
+            return;
+        }
+        $this->unsupportedFormats[$format] = true;
+
+        $this->logger->warning(
+            sprintf(
+                'The configured image adapter cannot encode %s, so no %s copies will be generated.',
+                strtoupper($format),
+                strtoupper($format)
+            )
+        );
     }
 }

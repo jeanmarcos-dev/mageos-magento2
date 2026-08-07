@@ -150,6 +150,22 @@ class ImageMagick extends AbstractAdapter
      *
      * If some folders of path does not exist they will be created
      *
+     * @inheritDoc
+     *
+     * ImageMagick can only write a format it has a delegate for.
+     */
+    public function supportsOutputFormat(string $formatName): bool
+    {
+        $format = $this->resolveFormat($formatName);
+
+        return $format !== null && !empty(\Imagick::queryFormats(strtoupper($format->getName())));
+    }
+
+    /**
+     * Save image to specific path.
+     *
+     * If some folders of path does not exist they will be created
+     *
      * @param null|string $destination
      * @param null|string $newName
      * @return void

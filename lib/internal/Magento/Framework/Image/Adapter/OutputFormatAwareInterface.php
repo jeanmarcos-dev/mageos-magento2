@@ -34,4 +34,15 @@ interface OutputFormatAwareInterface
      * @return FormatInterface|null
      */
     public function getOutputFormat(): ?FormatInterface;
+
+    /**
+     * Whether this installation can actually encode the given format
+     *
+     * Support depends on how the underlying library was built, so a caller can ask before opening
+     * a source image, which is the expensive part.
+     *
+     * @param string $formatName
+     * @return bool
+     */
+    public function supportsOutputFormat(string $formatName): bool;
 }

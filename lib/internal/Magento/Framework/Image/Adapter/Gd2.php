@@ -170,6 +170,26 @@ class Gd2 extends AbstractAdapter
      *
      * If some folders of path does not exist they will be created
      *
+     * @inheritDoc
+     *
+     * GD only declares the encoder helper for the formats it was built against.
+     */
+    public function supportsOutputFormat(string $formatName): bool
+    {
+        $format = $this->resolveFormat($formatName);
+        if ($format === null) {
+            return false;
+        }
+        $callback = self::$_callbacks[$format->getImageType()]['output'] ?? null;
+
+        return $callback !== null && function_exists($callback);
+    }
+
+    /**
+     * Save image to specific path.
+     *
+     * If some folders of path does not exist they will be created
+     *
      * @param null|string $destination
      * @param null|string $newName
      * @return void

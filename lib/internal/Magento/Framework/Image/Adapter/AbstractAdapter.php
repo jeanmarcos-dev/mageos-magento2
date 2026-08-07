@@ -331,8 +331,7 @@ abstract class AbstractAdapter implements AdapterInterface, OutputFormatAwareInt
             return;
         }
 
-        $provider = $this->getFormatProvider();
-        $format = $provider->getByExtension($formatName) ?? $provider->get($formatName);
+        $format = $this->resolveFormat($formatName);
         if ($format === null) {
             throw new \InvalidArgumentException(sprintf('Unknown image format "%s".', $formatName));
         }
@@ -346,6 +345,27 @@ abstract class AbstractAdapter implements AdapterInterface, OutputFormatAwareInt
     public function getOutputFormat(): ?FormatInterface
     {
         return $this->outputFormat;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function supportsOutputFormat(string $formatName): bool
+    {
+        return $this->resolveFormat($formatName) !== null;
+    }
+
+    /**
+     * Resolve a format from either its name or one of its extensions
+     *
+     * @param string $formatName
+     * @return FormatInterface|null
+     */
+    protected function resolveFormat(string $formatName): ?FormatInterface
+    {
+        $provider = $this->getFormatProvider();
+
+        return $provider->getByExtension($formatName) ?? $provider->get($formatName);
     }
 
     /**
