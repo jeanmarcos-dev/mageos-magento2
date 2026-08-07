@@ -54,6 +54,7 @@ class Upload extends \Magento\Backend\App\Action implements HttpPostActionInterf
      * @param \Magento\Framework\Image\AdapterFactory $adapterFactory
      * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\Catalog\Model\Product\Media\Config $productMediaConfig
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,

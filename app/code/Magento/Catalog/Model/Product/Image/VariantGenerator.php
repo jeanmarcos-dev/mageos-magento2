@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Magento\Catalog\Model\Product\Image;
 
+use Magento\Framework\Filesystem\Io\File as IoFile;
 use Magento\Framework\Image\Adapter\OutputFormatAwareInterface;
 use Magento\Framework\Image\AdapterFactory;
 use Magento\Framework\Image\Format\FormatProviderInterface;
@@ -42,6 +43,11 @@ class VariantGenerator
     private $logger;
 
     /**
+     * @var IoFile
+     */
+    private $ioFile;
+
+    /**
      * Formats already reported as unencodable, so the warning is logged once rather than per image
      *
      * @var array<string, true>
@@ -53,17 +59,20 @@ class VariantGenerator
      * @param VariantConfig $config
      * @param FormatProviderInterface $formatProvider
      * @param LoggerInterface $logger
+     * @param IoFile $ioFile
      */
     public function __construct(
         AdapterFactory $adapterFactory,
         VariantConfig $config,
         FormatProviderInterface $formatProvider,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        IoFile $ioFile
     ) {
         $this->adapterFactory = $adapterFactory;
         $this->config = $config;
         $this->formatProvider = $formatProvider;
         $this->logger = $logger;
+        $this->ioFile = $ioFile;
     }
 
     /**
@@ -83,7 +92,7 @@ class VariantGenerator
             return [];
         }
 
-        $sourceExtension = strtolower((string) pathinfo($imagePath, PATHINFO_EXTENSION));
+        $sourceExtension = strtolower((string) ($this->ioFile->getPathInfo($imagePath)['extension'] ?? ''));
         $written = [];
 
         foreach ($formats as $format) {

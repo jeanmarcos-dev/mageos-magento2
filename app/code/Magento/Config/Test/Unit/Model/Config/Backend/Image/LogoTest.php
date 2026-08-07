@@ -65,14 +65,14 @@ class LogoTest extends TestCase
                 'requestData' => $this->requestDataMock,
                 'filesystem' => $filesystemMock,
                 'formatProvider' => new FormatProvider(
-                [
-                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
-                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
-                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
-                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
-                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
-                ]
-            ),
+                    [
+                        new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                        new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                        new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                        new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                        new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                    ]
+                ),
             ]
         );
     }

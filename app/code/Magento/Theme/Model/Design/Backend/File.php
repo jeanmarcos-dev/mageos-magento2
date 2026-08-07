@@ -68,6 +68,7 @@ class File extends BackendFile
      * @param array $data
      * @param Database $databaseHelper
      * @param IoFileSystem $ioFileSystem
+     * @param FormatProviderInterface|null $formatProvider
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(

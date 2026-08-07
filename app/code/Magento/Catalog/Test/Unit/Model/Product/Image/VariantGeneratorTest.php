@@ -9,6 +9,7 @@ namespace Magento\Catalog\Test\Unit\Model\Product\Image;
 
 use Magento\Catalog\Model\Product\Image\VariantConfig;
 use Magento\Catalog\Model\Product\Image\VariantGenerator;
+use Magento\Framework\Filesystem\Io\File as IoFile;
 use Magento\Framework\Image\Adapter\AdapterInterface;
 use Magento\Framework\Image\Adapter\Gd2;
 use Magento\Framework\Image\AdapterFactory;
@@ -57,7 +58,8 @@ class VariantGeneratorTest extends TestCase
                     'avif' => new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
                 ]
             ),
-            $this->logger
+            $this->logger,
+            new IoFile()
         );
     }
 

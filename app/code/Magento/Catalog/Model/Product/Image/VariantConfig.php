@@ -33,7 +33,7 @@ class VariantConfig
 
     /**
      * @param ScopeConfigInterface $scopeConfig
-     * @param array<string, int> $defaultQuality Fallback quality per format name
+     * @param array $defaultQuality
      */
     public function __construct(ScopeConfigInterface $scopeConfig, array $defaultQuality = [])
     {
