@@ -88,6 +88,7 @@
     <preference for="Magento\Framework\View\Asset\ConfigInterface" type="Magento\Framework\View\Asset\Config" />
     <preference for="Magento\Framework\Image\Adapter\ConfigInterface" type="Magento\Framework\Image\Adapter\Config" />
     <preference for="Magento\Framework\Image\Adapter\UploadConfigInterface" type="Magento\Framework\Image\Adapter\Config" />
+    <preference for="Magento\Framework\Image\Format\FormatProviderInterface" type="Magento\Framework\Image\Format\FormatProvider" />
     <preference for="Magento\Framework\View\Design\Theme\Image\PathInterface" type="Magento\Theme\Model\Theme\Image\Path" />
     <preference for="Magento\Framework\Session\Config\ConfigInterface" type="Magento\Framework\Session\Config" />
     <preference for="Magento\Framework\Session\SidResolverInterface" type="Magento\Framework\Session\SidResolver\Proxy" />
@@ -1175,6 +1176,90 @@
     <type name="Magento\Framework\Image">
         <arguments>
             <argument name="adapter" xsi:type="object">Magento\Framework\Image\Adapter\Gd2</argument>
+        </arguments>
+    </type>
+    <virtualType name="Magento\Framework\Image\Format\Jpeg" type="Magento\Framework\Image\Format\Format">
+        <arguments>
+            <argument name="name" xsi:type="string">jpeg</argument>
+            <argument name="extensions" xsi:type="array">
+                <item name="jpg" xsi:type="string">jpg</item>
+                <item name="jpeg" xsi:type="string">jpeg</item>
+                <item name="jpe" xsi:type="string">jpe</item>
+            </argument>
+            <argument name="mimeTypes" xsi:type="array">
+                <item name="jpeg" xsi:type="string">image/jpeg</item>
+                <item name="jpg" xsi:type="string">image/jpg</item>
+            </argument>
+            <argument name="imageType" xsi:type="const">IMAGETYPE_JPEG</argument>
+            <argument name="supportsAlpha" xsi:type="boolean">false</argument>
+            <argument name="supportsQuality" xsi:type="boolean">true</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\Framework\Image\Format\Png" type="Magento\Framework\Image\Format\Format">
+        <arguments>
+            <argument name="name" xsi:type="string">png</argument>
+            <argument name="extensions" xsi:type="array">
+                <item name="png" xsi:type="string">png</item>
+            </argument>
+            <argument name="mimeTypes" xsi:type="array">
+                <item name="png" xsi:type="string">image/png</item>
+            </argument>
+            <argument name="imageType" xsi:type="const">IMAGETYPE_PNG</argument>
+            <argument name="supportsAlpha" xsi:type="boolean">true</argument>
+            <argument name="supportsQuality" xsi:type="boolean">false</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\Framework\Image\Format\Gif" type="Magento\Framework\Image\Format\Format">
+        <arguments>
+            <argument name="name" xsi:type="string">gif</argument>
+            <argument name="extensions" xsi:type="array">
+                <item name="gif" xsi:type="string">gif</item>
+            </argument>
+            <argument name="mimeTypes" xsi:type="array">
+                <item name="gif" xsi:type="string">image/gif</item>
+            </argument>
+            <argument name="imageType" xsi:type="const">IMAGETYPE_GIF</argument>
+            <argument name="supportsAlpha" xsi:type="boolean">true</argument>
+            <argument name="supportsQuality" xsi:type="boolean">false</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\Framework\Image\Format\Webp" type="Magento\Framework\Image\Format\Format">
+        <arguments>
+            <argument name="name" xsi:type="string">webp</argument>
+            <argument name="extensions" xsi:type="array">
+                <item name="webp" xsi:type="string">webp</item>
+            </argument>
+            <argument name="mimeTypes" xsi:type="array">
+                <item name="webp" xsi:type="string">image/webp</item>
+            </argument>
+            <argument name="imageType" xsi:type="const">IMAGETYPE_WEBP</argument>
+            <argument name="supportsAlpha" xsi:type="boolean">true</argument>
+            <argument name="supportsQuality" xsi:type="boolean">true</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\Framework\Image\Format\Avif" type="Magento\Framework\Image\Format\Format">
+        <arguments>
+            <argument name="name" xsi:type="string">avif</argument>
+            <argument name="extensions" xsi:type="array">
+                <item name="avif" xsi:type="string">avif</item>
+            </argument>
+            <argument name="mimeTypes" xsi:type="array">
+                <item name="avif" xsi:type="string">image/avif</item>
+            </argument>
+            <argument name="imageType" xsi:type="const">IMAGETYPE_AVIF</argument>
+            <argument name="supportsAlpha" xsi:type="boolean">true</argument>
+            <argument name="supportsQuality" xsi:type="boolean">true</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\Framework\Image\Format\FormatProvider">
+        <arguments>
+            <argument name="formats" xsi:type="array">
+                <item name="jpeg" xsi:type="object">Magento\Framework\Image\Format\Jpeg</item>
+                <item name="png" xsi:type="object">Magento\Framework\Image\Format\Png</item>
+                <item name="gif" xsi:type="object">Magento\Framework\Image\Format\Gif</item>
+                <item name="webp" xsi:type="object">Magento\Framework\Image\Format\Webp</item>
+                <item name="avif" xsi:type="object">Magento\Framework\Image\Format\Avif</item>
+            </argument>
         </arguments>
     </type>
     <type name="Magento\Framework\View\Layout\PageType\Config\Reader">
