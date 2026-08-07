@@ -7,6 +7,8 @@ namespace Magento\Catalog\Model\ResourceModel\Product\Attribute\Backend;
 
 use Magento\Eav\Model\Entity\Attribute\Backend\AbstractBackend;
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 
 /**
  * Product image attribute backend
@@ -30,13 +32,22 @@ class Image extends AbstractBackend
     protected $_fileUploaderFactory;
 
     /**
+     * @var FormatProviderInterface
+     */
+    private $formatProvider;
+
+    /**
      * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\MediaStorage\Model\File\UploaderFactory $fileUploaderFactory
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         \Magento\Framework\Filesystem $filesystem,
-        \Magento\MediaStorage\Model\File\UploaderFactory $fileUploaderFactory
+        \Magento\MediaStorage\Model\File\UploaderFactory $fileUploaderFactory,
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider
+            ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
         $this->_filesystem = $filesystem;
         $this->_fileUploaderFactory = $fileUploaderFactory;
     }
@@ -60,7 +71,7 @@ class Image extends AbstractBackend
         try {
             /** @var $uploader \Magento\MediaStorage\Model\File\Uploader */
             $uploader = $this->_fileUploaderFactory->create(['fileId' => $this->getAttribute()->getName()]);
-            $uploader->setAllowedExtensions(['jpg', 'jpeg', 'gif', 'png']);
+            $uploader->setAllowedExtensions($this->formatProvider->getExtensions());
             $uploader->setAllowRenameFiles(true);
             $uploader->setFilesDispersion(true);
         } catch (\Exception $e) {

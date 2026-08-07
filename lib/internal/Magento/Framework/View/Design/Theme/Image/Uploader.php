@@ -5,7 +5,9 @@
  */
 namespace Magento\Framework\View\Design\Theme\Image;
 
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\File\Http;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 
 /**
  * Theme Image Uploader
@@ -13,11 +15,11 @@ use Magento\Framework\File\Http;
 class Uploader
 {
     /**
-     * Allowed file extensions to upload
+     * Extra file extensions accepted on top of the ones the image format registry knows
      *
      * @var array
      */
-    protected $_allowedExtensions = ['jpg', 'jpeg', 'gif', 'png', 'xbm', 'wbmp'];
+    protected $_allowedExtensions = ['xbm', 'wbmp'];
 
     /**
      * @var \Magento\Framework\Filesystem
@@ -40,15 +42,20 @@ class Uploader
      * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\Framework\HTTP\Adapter\FileTransferFactory $adapterFactory
      * @param \Magento\Framework\File\UploaderFactory $uploaderFactory
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         \Magento\Framework\Filesystem $filesystem,
         \Magento\Framework\HTTP\Adapter\FileTransferFactory $adapterFactory,
-        \Magento\Framework\File\UploaderFactory $uploaderFactory
+        \Magento\Framework\File\UploaderFactory $uploaderFactory,
+        ?FormatProviderInterface $formatProvider = null
     ) {
         $this->_filesystem = $filesystem;
         $this->_transferAdapter = $adapterFactory->create();
         $this->_uploaderFactory = $uploaderFactory;
+        $formatProvider = $formatProvider ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        // Subclass additions to $_allowedExtensions stay on top of the registry defaults.
+        $this->_allowedExtensions = array_merge($formatProvider->getExtensions(), $this->_allowedExtensions);
     }
 
     /**

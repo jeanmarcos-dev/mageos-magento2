@@ -6,6 +6,8 @@
 namespace Magento\Swatches\Controller\Adminhtml\Iframe;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 
 /**
  * Class to show swatch image and save it on disk
@@ -47,12 +49,18 @@ class Show extends \Magento\Backend\App\Action
     protected $uploaderFactory;
 
     /**
+     * @var FormatProviderInterface
+     */
+    private $formatProvider;
+
+    /**
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Swatches\Helper\Media $swatchHelper
      * @param \Magento\Framework\Image\AdapterFactory $adapterFactory
      * @param \Magento\Catalog\Model\Product\Media\Config $config
      * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\MediaStorage\Model\File\UploaderFactory $uploaderFactory
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -60,8 +68,11 @@ class Show extends \Magento\Backend\App\Action
         \Magento\Framework\Image\AdapterFactory $adapterFactory,
         \Magento\Catalog\Model\Product\Media\Config $config,
         \Magento\Framework\Filesystem $filesystem,
-        \Magento\MediaStorage\Model\File\UploaderFactory $uploaderFactory
+        \Magento\MediaStorage\Model\File\UploaderFactory $uploaderFactory,
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider
+            ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
         $this->swatchHelper = $swatchHelper;
         $this->adapterFactory = $adapterFactory;
         $this->config = $config;
@@ -79,7 +90,7 @@ class Show extends \Magento\Backend\App\Action
     {
         try {
             $uploader = $this->uploaderFactory->create(['fileId' => 'datafile']);
-            $uploader->setAllowedExtensions(['jpg', 'jpeg', 'gif', 'png']);
+            $uploader->setAllowedExtensions($this->formatProvider->getExtensions());
             /** @var \Magento\Framework\Image\Adapter\AdapterInterface $imageAdapter */
             $imageAdapter = $this->adapterFactory->create();
             $uploader->addValidateCallback('catalog_product_image', $imageAdapter, 'validateUploadFile');

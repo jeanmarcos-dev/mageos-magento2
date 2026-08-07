@@ -7,7 +7,9 @@
 namespace Magento\Framework\Api;
 
 use Magento\Framework\Api\Data\ImageContentInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\InputException;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\Framework\Phrase;
 
 /**
@@ -18,25 +20,20 @@ class ImageContentValidator implements ImageContentValidatorInterface
     /**
      * @var array
      */
-    private $defaultMimeTypes = [
-        'image/jpg',
-        'image/jpeg',
-        'image/gif',
-        'image/png',
-    ];
-
-    /**
-     * @var array
-     */
     private $allowedMimeTypes;
 
     /**
      * @param array $allowedMimeTypes
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
-        array $allowedMimeTypes = []
+        array $allowedMimeTypes = [],
+        ?FormatProviderInterface $formatProvider = null
     ) {
-        $this->allowedMimeTypes = array_merge($this->defaultMimeTypes, $allowedMimeTypes);
+        $formatProvider = $formatProvider ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        $this->allowedMimeTypes = array_values(
+            array_unique(array_merge($formatProvider->getMimeTypes(), $allowedMimeTypes))
+        );
     }
 
     /**

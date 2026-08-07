@@ -8,6 +8,8 @@ declare(strict_types=1);
 namespace Magento\Customer\Test\Unit\Model\Metadata\Form;
 
 use Magento\Customer\Api\AddressMetadataInterface;
+use Magento\Framework\Image\Format\Format;
+use Magento\Framework\Image\Format\FormatProvider;
 use Magento\Customer\Api\CustomerMetadataInterface;
 use Magento\Customer\Api\Data\ValidationRuleInterface;
 use Magento\Customer\Model\FileProcessor;
@@ -173,7 +175,18 @@ class ImageTest extends AbstractFormTestCase
             $this->uploaderFactoryMock,
             $this->fileProcessorFactoryMock,
             $this->imageContentFactory,
-            $this->ioFileSystemMock
+            $this->ioFileSystemMock,
+            null,
+            null,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
     }
 

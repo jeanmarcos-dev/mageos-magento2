@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Magento\Backend\Block\Media;
 
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Image\Adapter\UploadConfigInterface;
 use Magento\Backend\Model\Image\UploadResizeConfigInterface;
@@ -45,6 +46,11 @@ class Uploader extends \Magento\Backend\Block\Widget
     private $imageUploadConfig;
 
     /**
+     * @var FormatProviderInterface
+     */
+    private $formatProvider;
+
+    /**
      * @var UploadConfigInterface
      * @deprecated 101.0.1
      * @see \Magento\Backend\Model\Image\UploadResizeConfigInterface
@@ -58,6 +64,7 @@ class Uploader extends \Magento\Backend\Block\Widget
      * @param Json|null $jsonEncoder
      * @param UploadConfigInterface|null $imageConfig
      * @param UploadResizeConfigInterface|null $imageUploadConfig
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -65,8 +72,11 @@ class Uploader extends \Magento\Backend\Block\Widget
         array $data = [],
         ?Json $jsonEncoder = null,
         ?UploadConfigInterface $imageConfig = null,
-        ?UploadResizeConfigInterface $imageUploadConfig = null
+        ?UploadResizeConfigInterface $imageUploadConfig = null,
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider
+            ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
         $this->_fileSizeService = $fileSize;
         $this->jsonEncoder = $jsonEncoder ?: ObjectManager::getInstance()->get(Json::class);
         $this->imageConfig = $imageConfig
@@ -91,11 +101,12 @@ class Uploader extends \Magento\Backend\Block\Widget
         $this->getConfig()->setUrl($uploadUrl);
         $this->getConfig()->setParams(['form_key' => $this->getFormKey()]);
         $this->getConfig()->setFileField('file');
+        $imageExtensions = $this->formatProvider->getExtensions();
         $this->getConfig()->setFilters(
             [
                 'images' => [
-                    'label' => __('Images (.gif, .jpg, .png)'),
-                    'files' => ['*.gif', '*.jpg', '*.png'],
+                    'label' => __('Images (%1)', '.' . implode(', .', $imageExtensions)),
+                    'files' => array_map(static fn (string $ext): string => '*.' . $ext, $imageExtensions),
                 ],
                 'media' => [
                     'label' => __('Media (.avi, .flv, .swf)'),

@@ -15,6 +15,8 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\File\UploaderFactory;
 use Magento\Framework\Filesystem;
 use Magento\Framework\HTTP\Adapter\FileTransferFactory;
+use Magento\Framework\Image\Format\Format;
+use Magento\Framework\Image\Format\FormatProvider;
 use Magento\Framework\View\Design\Theme\Image\Uploader;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -68,7 +70,16 @@ class UploaderTest extends TestCase
         $this->_model = new Uploader(
             $this->_filesystemMock,
             $adapterFactory,
-            $uploaderFactory
+            $uploaderFactory,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
     }
 

@@ -63,12 +63,18 @@ class Processor
     private $mime;
 
     /**
+     * @var \Magento\Framework\Image\Format\FormatProviderInterface
+     */
+    private $formatProvider;
+
+    /**
      * @param \Magento\Catalog\Api\ProductAttributeRepositoryInterface $attributeRepository
      * @param \Magento\MediaStorage\Helper\File\Storage\Database $fileStorageDb
      * @param \Magento\Catalog\Model\Product\Media\Config $mediaConfig
      * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\Catalog\Model\ResourceModel\Product\Gallery $resourceModel
      * @param \Magento\Framework\File\Mime|null $mime
+     * @param \Magento\Framework\Image\Format\FormatProviderInterface|null $formatProvider
      * @throws \Magento\Framework\Exception\FileSystemException
      */
     public function __construct(
@@ -77,7 +83,8 @@ class Processor
         \Magento\Catalog\Model\Product\Media\Config $mediaConfig,
         \Magento\Framework\Filesystem $filesystem,
         \Magento\Catalog\Model\ResourceModel\Product\Gallery $resourceModel,
-        ?\Magento\Framework\File\Mime $mime = null
+        ?\Magento\Framework\File\Mime $mime = null,
+        ?\Magento\Framework\Image\Format\FormatProviderInterface $formatProvider = null
     ) {
         $this->attributeRepository = $attributeRepository;
         $this->fileStorageDb = $fileStorageDb;
@@ -85,6 +92,8 @@ class Processor
         $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::MEDIA);
         $this->resourceModel = $resourceModel;
         $this->mime = $mime ?: ObjectManager::getInstance()->get(\Magento\Framework\File\Mime::class);
+        $this->formatProvider = $formatProvider
+            ?: ObjectManager::getInstance()->get(\Magento\Framework\Image\Format\FormatProviderInterface::class);
     }
 
     /**
@@ -159,7 +168,7 @@ class Processor
 
         // phpcs:ignore Magento2.Functions.DiscouragedFunction
         $pathinfo = pathinfo($file);
-        $imgExtensions = ['jpg', 'jpeg', 'gif', 'png'];
+        $imgExtensions = $this->formatProvider->getExtensions();
         if (!isset($pathinfo['extension']) || !in_array(strtolower($pathinfo['extension']), $imgExtensions)) {
             throw new LocalizedException(
                 __('The image type for the file is invalid. Enter the correct image type and try again.')

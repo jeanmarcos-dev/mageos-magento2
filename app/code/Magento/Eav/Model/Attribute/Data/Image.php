@@ -33,10 +33,10 @@ class Image extends \Magento\Eav\Model\Attribute\Data\File
         $imageProp = $localStorage
             ? @getimagesize($value['tmp_name'])
             : $this->_directory->getDriver()->getMetadata($value['tmp_name']);
-        $allowImageTypes = ['gif', 'jpg', 'jpeg', 'png'];
+        $allowImageTypes = $this->getFormatProvider()->getExtensions();
         if (!isset($imageProp['extension']) && isset($imageProp[2])) {
-            $extensionsMap = [1 => 'gif', 2 => 'jpg', 3 => 'png'];
-            $imageProp['extension'] = $extensionsMap[$imageProp[2]] ?? null;
+            $format = $this->getFormatProvider()->getByImageType((int) $imageProp[2]);
+            $imageProp['extension'] = $format ? $format->getPrimaryExtension() : null;
         }
 
         if (!\in_array($imageProp['extension'], $allowImageTypes, true)) {

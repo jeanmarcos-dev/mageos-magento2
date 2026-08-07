@@ -9,6 +9,7 @@ use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterf
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 
 /**
  * The product gallery upload controller
@@ -28,14 +29,9 @@ class Upload extends \Magento\Backend\App\Action implements HttpPostActionInterf
     protected $resultRawFactory;
 
     /**
-     * @var array
+     * @var FormatProviderInterface
      */
-    private $allowedMimeTypes = [
-        'jpg' => 'image/jpg',
-        'jpeg' => 'image/jpeg',
-        'gif' => 'image/gif',
-        'png' => 'image/png'
-    ];
+    private $formatProvider;
 
     /**
      * @var \Magento\Framework\Image\AdapterFactory
@@ -64,8 +60,11 @@ class Upload extends \Magento\Backend\App\Action implements HttpPostActionInterf
         \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
         ?\Magento\Framework\Image\AdapterFactory $adapterFactory = null,
         ?\Magento\Framework\Filesystem $filesystem = null,
-        ?\Magento\Catalog\Model\Product\Media\Config $productMediaConfig = null
+        ?\Magento\Catalog\Model\Product\Media\Config $productMediaConfig = null,
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider
+            ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
         parent::__construct($context);
         $this->resultRawFactory = $resultRawFactory;
         $this->adapterFactory = $adapterFactory ?: ObjectManager::getInstance()
@@ -131,6 +130,6 @@ class Upload extends \Magento\Backend\App\Action implements HttpPostActionInterf
      */
     private function getAllowedExtensions()
     {
-        return array_keys($this->allowedMimeTypes);
+        return $this->formatProvider->getExtensions();
     }
 }

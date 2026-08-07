@@ -12,6 +12,7 @@ namespace Magento\Theme\Helper;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Filesystem\DriverInterface;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 
 /**
  * Handles the storage of media files like images and fonts.
@@ -104,13 +105,18 @@ class Storage extends \Magento\Framework\App\Helper\AbstractHelper
     private $filesystemDriver;
 
     /**
+     * @var FormatProviderInterface|null
+     */
+    private $formatProvider;
+
+    /**
      * @param \Magento\Framework\App\Helper\Context $context
      * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\Backend\Model\Session $session
      * @param \Magento\Framework\View\Design\Theme\FlyweightFactory $themeFactory
      * @param \Magento\Framework\Filesystem\Io\File|null $file
-     *
      * @param DriverInterface|null $filesystemDriver
+     * @param FormatProviderInterface|null $formatProvider
      * @throws \Magento\Framework\Exception\FileSystemException
      * @throws \Magento\Framework\Exception\ValidatorException
      */
@@ -120,8 +126,10 @@ class Storage extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Backend\Model\Session $session,
         \Magento\Framework\View\Design\Theme\FlyweightFactory $themeFactory,
         ?\Magento\Framework\Filesystem\Io\File $file = null,
-        ?DriverInterface $filesystemDriver = null
+        ?DriverInterface $filesystemDriver = null,
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider;
         parent::__construct($context);
         $this->filesystem = $filesystem;
         $this->_session = $session;
@@ -328,6 +336,20 @@ class Storage extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Retrieve the image format registry, resolving it on first use
+     *
+     * @return FormatProviderInterface
+     */
+    private function getFormatProvider(): FormatProviderInterface
+    {
+        if ($this->formatProvider === null) {
+            $this->formatProvider = ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        }
+
+        return $this->formatProvider;
+    }
+
+    /**
      * Get allowed extensions by type
      *
      * @return string[]
@@ -337,7 +359,8 @@ class Storage extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->getStorageType() == \Magento\Theme\Model\Wysiwyg\Storage::TYPE_FONT
             ? ['ttf', 'otf', 'eot', 'svg', 'woff']
-            : ['jpg', 'jpeg', 'gif', 'png', 'xbm', 'wbmp'];
+            // The theme storage additionally keeps the two legacy raster formats GD still writes.
+            : array_merge($this->getFormatProvider()->getExtensions(), ['xbm', 'wbmp']);
     }
 
     /**

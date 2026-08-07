@@ -26,6 +26,7 @@ use Magento\Framework\Filesystem\Directory\ReadInterface;
 use Magento\Framework\Filesystem\Directory\WriteFactory;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Filesystem\Io\File as IoFileSystem;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\Framework\Locale\ResolverInterface;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\Url\EncoderInterface;
@@ -76,6 +77,7 @@ class Image extends File
      * @param IoFileSystem|null $ioFileSystem
      * @param DirectoryList|null $directoryList
      * @param WriteFactory|null $writeFactory
+     * @param FormatProviderInterface|null $formatProvider
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      * @throws FileSystemException
@@ -96,7 +98,8 @@ class Image extends File
         ?ImageContentInterfaceFactory $imageContentInterfaceFactory = null,
         ?IoFileSystem $ioFileSystem = null,
         ?DirectoryList $directoryList = null,
-        ?WriteFactory $writeFactory = null
+        ?WriteFactory $writeFactory = null,
+        ?FormatProviderInterface $formatProvider = null
     ) {
         parent::__construct(
             $localeDate,
@@ -110,7 +113,9 @@ class Image extends File
             $fileValidator,
             $fileSystem,
             $uploaderFactory,
-            $fileProcessorFactory
+            $fileProcessorFactory,
+            null,
+            $formatProvider
         );
         $this->imageContentFactory = $imageContentInterfaceFactory ?: ObjectManager::getInstance()
             ->get(ImageContentInterfaceFactory::class);
@@ -150,18 +155,18 @@ class Image extends File
             return [__('"%1" is not a valid file.', $label)];
         }
 
-        $allowImageTypes = [1 => 'gif', 2 => 'jpg', 3 => 'png'];
+        $format = $this->getFormatProvider()->getByImageType((int) $imageProp[2]);
 
-        if (!isset($allowImageTypes[$imageProp[2]])) {
+        if ($format === null) {
             return [__('"%1" is not a valid image format.', $label)];
         }
 
         // modify image name
         $extension = $this->ioFileSystem->getPathInfo($value['name'])['extension'];
-        if ($extension != $allowImageTypes[$imageProp[2]]) {
+        if ($extension != $format->getPrimaryExtension()) {
             $value['name'] = $this->ioFileSystem->getPathInfo($value['name'])['filename']
                 . '.'
-                . $allowImageTypes[$imageProp[2]];
+                . $format->getPrimaryExtension();
         }
 
         $maxFileSize = ArrayObjectSearch::getArrayElementByName(

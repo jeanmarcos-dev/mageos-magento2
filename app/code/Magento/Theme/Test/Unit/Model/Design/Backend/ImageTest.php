@@ -9,6 +9,8 @@ declare(strict_types=1);
 namespace Magento\Theme\Test\Unit\Model\Design\Backend;
 
 use Magento\Config\Model\Config\Backend\File\RequestData\RequestDataInterface;
+use Magento\Framework\Image\Format\Format;
+use Magento\Framework\Image\Format\FormatProvider;
 use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Collection\AbstractDb;
@@ -63,7 +65,16 @@ class ImageTest extends \PHPUnit\Framework\TestCase
             $abstractDb,
             [],
             $databaseHelper,
-            $this->ioFileSystem
+            $this->ioFileSystem,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
     }
 

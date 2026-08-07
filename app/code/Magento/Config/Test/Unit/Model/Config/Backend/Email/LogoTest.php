@@ -8,6 +8,8 @@ declare(strict_types=1);
 namespace Magento\Config\Test\Unit\Model\Config\Backend\Email;
 
 use Magento\Config\Model\Config\Backend\Email\Logo;
+use Magento\Framework\Image\Format\Format;
+use Magento\Framework\Image\Format\FormatProvider;
 use Magento\Config\Model\Config\Backend\File\RequestData\RequestDataInterface;
 use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -84,7 +86,19 @@ class LogoTest extends TestCase
             $this->typeListMock,
             $this->uploaderFactoryMock,
             $this->requestDataMock,
-            $this->filesystemMock
+            $this->filesystemMock,
+            null,
+            null,
+            [],
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
     }
 

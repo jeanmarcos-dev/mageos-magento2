@@ -8,6 +8,8 @@ declare(strict_types=1);
 namespace Magento\Theme\Test\Unit\Helper;
 
 use Magento\Backend\Model\Session;
+use Magento\Framework\Image\Format\Format;
+use Magento\Framework\Image\Format\FormatProvider;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Filesystem;
@@ -152,7 +154,16 @@ class StorageTest extends TestCase
             $this->session,
             $this->themeFactory,
             $this->file,
-            $this->filesystemDriver
+            $this->filesystemDriver,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
     }
 
@@ -276,7 +287,7 @@ class StorageTest extends TestCase
         $this->assertEquals(['ttf', 'otf', 'eot', 'svg', 'woff'], $fontTypes);
 
         $imagesTypes = $this->helper->getAllowedExtensionsByType();
-        $this->assertEquals(['jpg', 'jpeg', 'gif', 'png', 'xbm', 'wbmp'], $imagesTypes);
+        $this->assertEquals(['jpg', 'jpeg', 'gif', 'png', 'webp', 'avif', 'xbm', 'wbmp'], $imagesTypes);
     }
 
     /**
@@ -314,7 +325,16 @@ class StorageTest extends TestCase
             $this->session,
             $this->themeFactory,
             $this->file,
-            $this->filesystemDriver
+            $this->filesystemDriver,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
 
         $this->urlDecoder->expects($this->once())
@@ -461,7 +481,16 @@ class StorageTest extends TestCase
             $this->session,
             $this->themeFactory,
             $this->file,
-            $this->filesystemDriver
+            $this->filesystemDriver,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
 
         $helper->getStorageRoot();
@@ -572,7 +601,16 @@ class StorageTest extends TestCase
             $this->session,
             $this->themeFactory,
             $this->file,
-            $this->filesystemDriver
+            $this->filesystemDriver,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
     }
 }

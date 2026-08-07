@@ -9,6 +9,8 @@ namespace Magento\Framework\Api\Test\Unit\Api;
 
 use Magento\Framework\Api\Data\ImageContentInterface;
 use Magento\Framework\Api\ImageContentValidator;
+use Magento\Framework\Image\Format\Format;
+use Magento\Framework\Image\Format\FormatProvider;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\TestCase;
 
@@ -31,7 +33,18 @@ class ImageContentValidatorTest extends TestCase
     {
         $this->objectManager = new ObjectManager($this);
         $this->imageContentValidator = $this->objectManager->getObject(
-            ImageContentValidator::class
+            ImageContentValidator::class,
+            [
+                'formatProvider' => new FormatProvider(
+                    [
+                        new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg', 'image/jpg'], IMAGETYPE_JPEG, false, true),
+                        new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                        new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                        new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                        new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                    ]
+                ),
+            ]
         );
     }
 

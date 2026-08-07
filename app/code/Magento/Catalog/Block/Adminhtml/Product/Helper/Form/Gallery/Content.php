@@ -15,6 +15,7 @@ namespace Magento\Catalog\Block\Adminhtml\Product\Helper\Form\Gallery;
 
 use Magento\Catalog\Helper\Image;
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\Backend\Block\Media\Uploader;
 use Magento\Framework\Json\Helper\Data as JsonHelper;
 use Magento\Framework\View\Element\AbstractBlock;
@@ -61,6 +62,11 @@ class Content extends \Magento\Backend\Block\Widget
     private $fileStorageDatabase;
 
     /**
+     * @var FormatProviderInterface
+     */
+    private $formatProvider;
+
+    /**
      * @param \Magento\Backend\Block\Template\Context $context
      * @param \Magento\Framework\Json\EncoderInterface $jsonEncoder
      * @param \Magento\Catalog\Model\Product\Media\Config $mediaConfig
@@ -69,6 +75,7 @@ class Content extends \Magento\Backend\Block\Widget
      * @param Database $fileStorageDatabase
      * @param JsonHelper|null $jsonHelper
      * @param Image|null $imageHelper
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         \Magento\Backend\Block\Template\Context $context,
@@ -78,8 +85,11 @@ class Content extends \Magento\Backend\Block\Widget
         ?ImageUploadConfigDataProvider $imageUploadConfigDataProvider = null,
         ?Database $fileStorageDatabase = null,
         ?JsonHelper $jsonHelper = null,
-        ?Image $imageHelper = null
+        ?Image $imageHelper = null,
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider
+            ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
         $this->_jsonEncoder = $jsonEncoder;
         $this->_mediaConfig = $mediaConfig;
         $data['jsonHelper'] = $jsonHelper ?? ObjectManager::getInstance()->get(JsonHelper::class);
@@ -104,6 +114,7 @@ class Content extends \Magento\Backend\Block\Widget
             ['image_upload_config_data' => $this->imageUploadConfigDataProvider]
         );
 
+        $imageExtensions = $this->formatProvider->getExtensions();
         $this->getUploader()->getConfig()->setUrl(
             $this->_urlBuilder->getUrl('catalog/product_gallery/upload')
         )->setFileField(
@@ -111,8 +122,8 @@ class Content extends \Magento\Backend\Block\Widget
         )->setFilters(
             [
                 'images' => [
-                    'label' => __('Images (.gif, .jpg, .png)'),
-                    'files' => ['*.gif', '*.jpg', '*.jpeg', '*.png'],
+                    'label' => __('Images (%1)', '.' . implode(', .', $imageExtensions)),
+                    'files' => array_map(static fn (string $ext): string => '*.' . $ext, $imageExtensions),
                 ],
             ]
         );

@@ -33,14 +33,4 @@ class Logo extends Image
     {
         return true;
     }
-
-    /**
-     * Getter for allowed extensions of uploaded files.
-     *
-     * @return string[]
-     */
-    public function getAllowedExtensions()
-    {
-        return ['jpg', 'jpeg', 'gif', 'png'];
-    }
 }

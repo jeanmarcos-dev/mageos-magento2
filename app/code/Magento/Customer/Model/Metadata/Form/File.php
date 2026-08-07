@@ -11,6 +11,7 @@ use Magento\Framework\Api\ArrayObjectSearch;
 use Magento\Framework\Api\Data\ImageContentInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\File\UploaderFactory;
 use Magento\Framework\Filesystem;
@@ -23,6 +24,28 @@ use Magento\Framework\Filesystem\Io\File as IoFile;
  */
 class File extends AbstractData
 {
+    /**
+     * @var FormatProviderInterface|null
+     */
+    private $formatProvider;
+
+    /**
+     * Retrieve the image format registry, resolving it on first use
+     *
+     * Instances are built by a factory that forwards the previous argument list, so the dependency
+     * cannot be required up front.
+     *
+     * @return FormatProviderInterface
+     */
+    protected function getFormatProvider(): FormatProviderInterface
+    {
+        if ($this->formatProvider === null) {
+            $this->formatProvider = ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        }
+
+        return $this->formatProvider;
+    }
+
     public const UPLOADED_FILE_SUFFIX = '_uploaded';
 
     /**
@@ -87,6 +110,7 @@ class File extends AbstractData
      * @param UploaderFactory $uploaderFactory
      * @param \Magento\Customer\Model\FileProcessorFactory|null $fileProcessorFactory
      * @param IoFile|null $ioFile
+     * @param FormatProviderInterface|null $formatProvider
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -102,8 +126,10 @@ class File extends AbstractData
         Filesystem $fileSystem,
         UploaderFactory $uploaderFactory,
         ?\Magento\Customer\Model\FileProcessorFactory $fileProcessorFactory = null,
-        ?IoFile $ioFile = null
+        ?IoFile $ioFile = null,
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider;
         $value = $this->prepareFileValue($value);
         parent::__construct($localeDate, $logger, $attribute, $localeResolver, $value, $entityTypeCode, $isAjax);
         $this->urlEncoder = $urlEncoder;

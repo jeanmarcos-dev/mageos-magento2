@@ -8,7 +8,9 @@ namespace Magento\Eav\Model\Attribute\Data;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Filesystem\Io\File as FileIo;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 
 /**
  * EAV Entity Attribute File Data Model
@@ -19,6 +21,11 @@ use Magento\Framework\Exception\LocalizedException;
  */
 class File extends \Magento\Eav\Model\Attribute\Data\AbstractData
 {
+    /**
+     * @var FormatProviderInterface|null
+     */
+    private $formatProvider;
+
     /**
      * Validator for check not protected extensions
      *
@@ -54,6 +61,7 @@ class File extends \Magento\Eav\Model\Attribute\Data\AbstractData
      * @param \Magento\MediaStorage\Model\File\Validator\NotProtectedExtension $fileValidator
      * @param \Magento\Framework\Filesystem $filesystem
      * @param FileIo $fileIo
+     * @param FormatProviderInterface|null $formatProvider
      * @codeCoverageIgnore
      */
     public function __construct(
@@ -63,13 +71,32 @@ class File extends \Magento\Eav\Model\Attribute\Data\AbstractData
         \Magento\Framework\Url\EncoderInterface $urlEncoder,
         \Magento\MediaStorage\Model\File\Validator\NotProtectedExtension $fileValidator,
         \Magento\Framework\Filesystem $filesystem,
-        FileIo $fileIo
+        FileIo $fileIo,
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider;
         parent::__construct($localeDate, $logger, $localeResolver);
         $this->urlEncoder = $urlEncoder;
         $this->_fileValidator = $fileValidator;
         $this->_directory = $filesystem->getDirectoryWrite(DirectoryList::MEDIA);
         $this->fileIo = $fileIo;
+    }
+
+    /**
+     * Retrieve the image format registry, resolving it on first use
+     *
+     * Instances are built by factories that forward the previous argument list, so the dependency
+     * cannot be required up front.
+     *
+     * @return FormatProviderInterface
+     */
+    protected function getFormatProvider(): FormatProviderInterface
+    {
+        if ($this->formatProvider === null) {
+            $this->formatProvider = ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        }
+
+        return $this->formatProvider;
     }
 
     /**

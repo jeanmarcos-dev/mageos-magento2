@@ -20,14 +20,4 @@ class Logo extends DesignLogo
      * @var int
      */
     protected $maxFileSize = 2048;
-
-    /**
-     * Getter for allowed extensions of uploaded files
-     *
-     * @return string[]
-     */
-    public function getAllowedExtensions()
-    {
-        return ['jpg', 'jpeg', 'gif', 'png'];
-    }
 }

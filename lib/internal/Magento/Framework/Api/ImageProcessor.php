@@ -8,9 +8,11 @@ namespace Magento\Framework\Api;
 
 use Magento\Framework\Api\Data\ImageContentInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\Framework\Phrase;
 
 /**
@@ -19,14 +21,11 @@ use Magento\Framework\Phrase;
 class ImageProcessor implements ImageProcessorInterface, ImageContentUploaderInterface
 {
     /**
+     * Extra MIME type to extension pairs, merged on top of the ones the format registry knows.
+     *
      * @var array
      */
-    protected $mimeTypeExtensionMap = [
-        'image/jpg' => 'jpg',
-        'image/jpeg' => 'jpg',
-        'image/gif' => 'gif',
-        'image/png' => 'png',
-    ];
+    protected $mimeTypeExtensionMap = [];
 
     /**
      * @var Filesystem
@@ -64,19 +63,27 @@ class ImageProcessor implements ImageProcessorInterface, ImageContentUploaderInt
      * @param DataObjectHelper $dataObjectHelper
      * @param \Psr\Log\LoggerInterface $logger
      * @param Uploader $uploader
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         Filesystem $fileSystem,
         ImageContentValidatorInterface $contentValidator,
         DataObjectHelper $dataObjectHelper,
         \Psr\Log\LoggerInterface $logger,
-        Uploader $uploader
+        Uploader $uploader,
+        ?FormatProviderInterface $formatProvider = null
     ) {
         $this->filesystem = $fileSystem;
         $this->contentValidator = $contentValidator;
         $this->dataObjectHelper = $dataObjectHelper;
         $this->logger = $logger;
         $this->uploader = $uploader;
+        $formatProvider = $formatProvider ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        // Subclass overrides of $mimeTypeExtensionMap stay authoritative over the registry defaults.
+        $this->mimeTypeExtensionMap = array_merge(
+            $formatProvider->getMimeTypeToExtensionMap(),
+            $this->mimeTypeExtensionMap
+        );
         $this->mediaDirectory = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA);
     }
 

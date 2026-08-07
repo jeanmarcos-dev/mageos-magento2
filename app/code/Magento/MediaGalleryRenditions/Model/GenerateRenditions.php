@@ -8,12 +8,14 @@ declare(strict_types=1);
 namespace Magento\MediaGalleryRenditions\Model;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Image\AdapterFactory;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\MediaGalleryApi\Api\IsPathExcludedInterface;
 use Magento\MediaGalleryRenditionsApi\Api\GenerateRenditionsInterface;
 use Magento\MediaGalleryRenditionsApi\Api\GetRenditionPathInterface;
@@ -24,7 +26,10 @@ use Psr\Log\LoggerInterface;
  */
 class GenerateRenditions implements GenerateRenditionsInterface
 {
-    private const IMAGE_FILE_NAME_PATTERN = '#\.(jpg|jpeg|gif|png)$# i';
+    /**
+     * @var FormatProviderInterface
+     */
+    private $formatProvider;
 
     /**
      * @var AdapterFactory
@@ -69,6 +74,7 @@ class GenerateRenditions implements GenerateRenditionsInterface
      * @param File $driver
      * @param IsPathExcludedInterface $isPathExcluded
      * @param LoggerInterface $log
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         AdapterFactory $imageFactory,
@@ -77,7 +83,8 @@ class GenerateRenditions implements GenerateRenditionsInterface
         Filesystem $filesystem,
         File $driver,
         IsPathExcludedInterface $isPathExcluded,
-        LoggerInterface $log
+        LoggerInterface $log,
+        ?FormatProviderInterface $formatProvider = null
     ) {
         $this->imageFactory = $imageFactory;
         $this->config = $config;
@@ -86,6 +93,8 @@ class GenerateRenditions implements GenerateRenditionsInterface
         $this->driver = $driver;
         $this->isPathExcluded = $isPathExcluded;
         $this->log = $log;
+        $this->formatProvider = $formatProvider
+            ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
     }
 
     /**
@@ -230,6 +239,11 @@ class GenerateRenditions implements GenerateRenditionsInterface
      */
     public function getImageFileNamePattern(): string
     {
-        return self::IMAGE_FILE_NAME_PATTERN;
+        $extensions = array_map(
+            static fn (string $extension): string => preg_quote($extension, '#'),
+            $this->formatProvider->getExtensions()
+        );
+
+        return '#\.(' . implode('|', $extensions) . ')$# i';
     }
 }

@@ -10,6 +10,8 @@ namespace Magento\MediaGalleryRenditions\Test\Unit\Model;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Image\AdapterFactory;
+use Magento\Framework\Image\Format\Format;
+use Magento\Framework\Image\Format\FormatProvider;
 use Magento\MediaGalleryApi\Api\IsPathExcludedInterface;
 use Magento\MediaGalleryRenditions\Model\Config;
 use Magento\MediaGalleryRenditions\Model\GenerateRenditions;
@@ -77,7 +79,16 @@ class GenerateRenditionsTest extends TestCase
             $this->filesystemMock,
             $this->driverMock,
             $this->isPathExcludedMock,
-            $this->loggerMock
+            $this->loggerMock,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
         );
     }
 
@@ -89,10 +100,20 @@ class GenerateRenditionsTest extends TestCase
         $pattern = $this->model->getImageFileNamePattern();
         
         // Assert the pattern is the expected string
-        $this->assertEquals('#\.(jpg|jpeg|gif|png)$# i', $pattern);
+        $this->assertEquals('#\.(jpg|jpeg|gif|png|webp|avif)$# i', $pattern);
         
         // Test that the pattern correctly validates supported file types
-        $validExtensions = ['test.jpg', 'test.jpeg', 'test.gif', 'test.png', 'TEST.JPG', 'TEST.PNG'];
+        $validExtensions = [
+            'test.jpg',
+            'test.jpeg',
+            'test.gif',
+            'test.png',
+            'test.webp',
+            'test.avif',
+            'TEST.JPG',
+            'TEST.PNG',
+            'TEST.WEBP'
+        ];
         foreach ($validExtensions as $filename) {
             $this->assertEquals(
                 1,
@@ -102,7 +123,7 @@ class GenerateRenditionsTest extends TestCase
         }
         
         // Test that the pattern correctly rejects unsupported file types
-        $invalidExtensions = ['test.txt', 'test.pdf', 'test.webp', 'test.bmp', 'test'];
+        $invalidExtensions = ['test.txt', 'test.pdf', 'test.bmp', 'test'];
         foreach ($invalidExtensions as $filename) {
             $this->assertEquals(
                 0,
@@ -126,7 +147,9 @@ class GenerateRenditionsTest extends TestCase
             'image.GIF',
             'image.Gif',
             'image.PNG',
-            'image.Png'
+            'image.Png',
+            'image.WEBP',
+            'image.WebP'
         ];
         
         foreach ($mixedCaseFiles as $filename) {

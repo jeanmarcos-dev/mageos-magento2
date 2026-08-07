@@ -17,6 +17,7 @@ use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\File\Mime;
 use Magento\Framework\Filesystem;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\Framework\Filesystem\Io\File as IoFileSystem;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
@@ -82,7 +83,8 @@ class File extends BackendFile
         ?AbstractDb $resourceCollection = null,
         array $data = [],
         ?Database $databaseHelper = null,
-        ?IoFileSystem $ioFileSystem = null
+        ?IoFileSystem $ioFileSystem = null,
+        ?FormatProviderInterface $formatProvider = null
     ) {
         parent::__construct(
             $context,
@@ -94,7 +96,8 @@ class File extends BackendFile
             $filesystem,
             $resource,
             $resourceCollection,
-            $data
+            $data,
+            $formatProvider
         );
         $this->urlBuilder = $urlBuilder;
         $this->databaseHelper = $databaseHelper ?: ObjectManager::getInstance()->get(Database::class);

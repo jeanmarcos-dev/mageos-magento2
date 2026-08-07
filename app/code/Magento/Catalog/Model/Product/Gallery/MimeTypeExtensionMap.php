@@ -5,19 +5,30 @@
  */
 namespace Magento\Catalog\Model\Product\Gallery;
 
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Image\Format\FormatProviderInterface;
+
 class MimeTypeExtensionMap
 {
     /**
-     * Mapping of image MIME types to file extensions.
+     * Extra MIME type to extension pairs, merged on top of the ones the format registry knows.
      *
      * @var array
      */
-    protected $mimeTypeExtensionMap = [
-        'image/jpg' => 'jpg',
-        'image/jpeg' => 'jpg',
-        'image/gif' => 'gif',
-        'image/png' => 'png',
-    ];
+    protected $mimeTypeExtensionMap = [];
+
+    /**
+     * @param FormatProviderInterface|null $formatProvider
+     */
+    public function __construct(?FormatProviderInterface $formatProvider = null)
+    {
+        $formatProvider = $formatProvider ?: ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        // Subclass overrides of $mimeTypeExtensionMap stay authoritative over the registry defaults.
+        $this->mimeTypeExtensionMap = array_merge(
+            $formatProvider->getMimeTypeToExtensionMap(),
+            $this->mimeTypeExtensionMap
+        );
+    }
 
     /**
      * Resolve extension from a MIME type.

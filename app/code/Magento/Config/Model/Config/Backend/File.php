@@ -11,7 +11,9 @@ use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Filesystem;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Magento\MediaStorage\Model\File\Uploader;
 
 /**
@@ -42,6 +44,11 @@ class File extends \Magento\Framework\App\Config\Value
     protected $_filesystem;
 
     /**
+     * @var FormatProviderInterface|null
+     */
+    private $formatProvider;
+
+    /**
      * @var \Magento\Framework\Filesystem\Directory\WriteInterface
      */
     protected $_mediaDirectory;
@@ -62,6 +69,7 @@ class File extends \Magento\Framework\App\Config\Value
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
+     * @param FormatProviderInterface|null $formatProvider
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
@@ -73,13 +81,32 @@ class File extends \Magento\Framework\App\Config\Value
         Filesystem $filesystem,
         ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
-        array $data = []
+        array $data = [],
+        ?FormatProviderInterface $formatProvider = null
     ) {
+        $this->formatProvider = $formatProvider;
         $this->_uploaderFactory = $uploaderFactory;
         $this->_requestData = $requestData;
         $this->_filesystem = $filesystem;
         $this->_mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::MEDIA);
         parent::__construct($context, $registry, $config, $cacheTypeList, $resource, $resourceCollection, $data);
+    }
+
+    /**
+     * Retrieve the image format registry, resolving it on first use
+     *
+     * Subclasses of this hierarchy predate the dependency and forward the previous argument list,
+     * so it cannot be required up front.
+     *
+     * @return FormatProviderInterface
+     */
+    protected function getFormatProvider(): FormatProviderInterface
+    {
+        if ($this->formatProvider === null) {
+            $this->formatProvider = ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        }
+
+        return $this->formatProvider;
     }
 
     /**
