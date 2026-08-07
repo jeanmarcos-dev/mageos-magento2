@@ -11,6 +11,8 @@ declare(strict_types=1);
 namespace Magento\Theme\Test\Unit\Model\Wysiwyg;
 
 use Magento\Backend\Model\Session;
+use Magento\Framework\Image\Format\Format;
+use Magento\Framework\Image\Format\FormatProvider;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Directory\Write;
@@ -134,6 +136,22 @@ class StorageTest extends TestCase
         $reflection = new ReflectionClass(HelperStorage::class);
         $reflection_property = $reflection->getProperty('file');
         $reflection_property->setValue($this->helperStorage, $file);
+
+        // The partial mock skips the constructor, so the image format registry has to be placed the
+        // same way; without it the helper falls back to the object manager, which is not available.
+        $formatProperty = $reflection->getProperty('formatProvider');
+        $formatProperty->setValue(
+            $this->helperStorage,
+            new FormatProvider(
+                [
+                    new Format('jpeg', ['jpg', 'jpeg'], ['image/jpeg'], IMAGETYPE_JPEG, false, true),
+                    new Format('gif', ['gif'], ['image/gif'], IMAGETYPE_GIF, true, false),
+                    new Format('png', ['png'], ['image/png'], IMAGETYPE_PNG, true, false),
+                    new Format('webp', ['webp'], ['image/webp'], IMAGETYPE_WEBP, true, true),
+                    new Format('avif', ['avif'], ['image/avif'], IMAGETYPE_AVIF, true, true),
+                ]
+            )
+        );
 
         $this->objectManager = $this->createMock(ObjectManagerInterface::class);
         $this->imageFactory = $this->createMock(AdapterFactory::class);
