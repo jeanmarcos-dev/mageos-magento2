@@ -189,6 +189,7 @@ class InterfaceTest extends \PHPUnit\Framework\TestCase
             [
                 [null],
                 [self::_getFixture('image_adapters_test.png')],
+                [self::_getFixture('image_adapters_test.webp')],
                 [self::_getFixture('image_adapters_test.tiff')],
                 [self::_getFixture('image_adapters_test.bmp')],
             ]
@@ -792,5 +793,223 @@ class InterfaceTest extends \PHPUnit\Framework\TestCase
                 'useFixture' => true
             ]
         ];
+    }
+
+    /**
+     * WebP has to be listed as a supported format so that every extension-driven check accepts it.
+     *
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testWebpIsAdvertisedAsSupported($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+
+        $this->assertContains('webp', $adapter->getSupportedFormats());
+    }
+
+    /**
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testOpenWebpReportsTheRightTypeAndMime($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+        $image = $this->_getFixture('image_adapters_test.webp');
+        $this->skipUnlessWebpIsWritable($adapter, $image);
+
+        $adapter->open($image);
+
+        $this->assertEquals(IMAGETYPE_WEBP, $adapter->getImageType());
+        $this->assertEquals('image/webp', $adapter->getMimeType());
+    }
+
+    /**
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testResizeAndSaveWebpKeepsTheFormat($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+        $image = $this->_getFixture('image_adapters_test.webp');
+        $this->skipUnlessWebpIsWritable($adapter, $image);
+
+        $adapter->open($image);
+        $adapter->resize(100, 100);
+        $destination = $this->_getFixture(uniqid('resized_') . '.webp');
+        $adapter->save($destination);
+
+        $this->assertFileExists($destination);
+        $written = getimagesize($destination);
+        $this->assertEquals('image/webp', $written['mime']);
+        $this->assertEquals(IMAGETYPE_WEBP, $written[2]);
+        unlink($destination);
+    }
+
+    /**
+     * Transparency used to be assumed to exist in GIF and PNG only, which flattened a WebP alpha
+     * channel onto the background colour.
+     *
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testResizeWebpPreservesTheAlphaChannel($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+        $image = $this->_getFixture('watermark_alpha.webp');
+        $this->skipUnlessWebpIsWritable($adapter, $image);
+
+        $adapter->keepTransparency(true);
+        $adapter->open($image);
+        $adapter->resize(30, 30);
+        $destination = $this->_getFixture(uniqid('alpha_') . '.webp');
+        $adapter->save($destination);
+
+        $resource = imagecreatefromwebp($destination);
+        $cornerAlpha = (imagecolorat($resource, 0, 0) >> 24) & 0x7F;
+        imagedestroy($resource);
+        unlink($destination);
+
+        $this->assertGreaterThan(
+            100,
+            $cornerAlpha,
+            'The transparent corner of the source has to stay (near) fully transparent.'
+        );
+    }
+
+    /**
+     * The output format override is what makes a JPEG-to-WebP conversion possible at all; without it
+     * the adapter would encode JPEG bytes behind a .webp name.
+     *
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testSaveWithWebpOutputFormatConvertsTheEncoding($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+        $image = $this->_getFixture('watermark_alpha_base_image.jpg');
+        $this->skipUnlessWebpIsWritable($adapter, $image);
+
+        $adapter->open($image);
+        $this->assertEquals(IMAGETYPE_JPEG, $adapter->getImageType());
+
+        $adapter->setOutputFormat('webp');
+        $destination = $this->_getFixture(uniqid('converted_') . '.jpg.webp');
+        $adapter->save($destination);
+
+        $written = getimagesize($destination);
+        $this->assertEquals('image/webp', $written['mime'], 'The bytes must really be WebP.');
+        unlink($destination);
+
+        $this->assertNotNull($adapter->getOutputFormat());
+        $adapter->setOutputFormat(null);
+        $this->assertNull($adapter->getOutputFormat());
+    }
+
+    /**
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testUnknownOutputFormatIsRejected($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $adapter->setOutputFormat('definitely-not-a-format');
+    }
+
+    /**
+     * AVIF has to be advertised the moment it is registered, whichever adapter is in use.
+     *
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testAvifIsAdvertisedAsSupported($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+
+        $this->assertContains('avif', $adapter->getSupportedFormats());
+    }
+
+    /**
+     * A build that cannot encode AVIF has to report an unsupported format rather than raise a fatal
+     * error over the missing GD helper.
+     *
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testAvifOutputFormatIsRejectedWhenTheBuildCannotEncodeIt($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+        if ($this->canEncode($adapter, 'avif')) {
+            $this->markTestSkipped('This build can encode AVIF, so there is nothing to reject.');
+        }
+
+        $adapter->open($this->_getFixture('watermark_alpha_base_image.jpg'));
+        // setOutputFormat only resolves the format; the refusal surfaces when the encoder is invoked.
+        $adapter->setOutputFormat('avif');
+
+        $this->expectException(\Exception::class);
+        $adapter->save($this->_getFixture(uniqid('rejected_') . '.jpg.avif'));
+    }
+
+    /**
+     * @param string $adapterType
+     */
+    #[DataProvider('adaptersDataProvider')]
+    public function testSaveWithAvifOutputFormatConvertsTheEncoding($adapterType)
+    {
+        $adapter = $this->_getAdapter($adapterType);
+        if (!$this->canEncode($adapter, 'avif')) {
+            $this->markTestSkipped('This build cannot encode AVIF.');
+        }
+
+        $adapter->open($this->_getFixture('watermark_alpha_base_image.jpg'));
+        $adapter->setOutputFormat('avif');
+        $destination = $this->_getFixture(uniqid('converted_') . '.jpg.avif');
+        $adapter->save($destination);
+
+        $written = getimagesize($destination);
+        $this->assertEquals('image/avif', $written['mime'], 'The bytes must really be AVIF.');
+        $this->assertEquals(IMAGETYPE_AVIF, $written[2]);
+        unlink($destination);
+    }
+
+    /**
+     * Whether the adapter in use can encode the given format on this build.
+     *
+     * @param \Magento\Framework\Image\Adapter\AdapterInterface $adapter
+     * @param string $format
+     * @return bool
+     */
+    private function canEncode($adapter, string $format): bool
+    {
+        if ($adapter instanceof \Magento\Framework\Image\Adapter\ImageMagick) {
+            return !empty(\Imagick::queryFormats(strtoupper($format)));
+        }
+
+        return function_exists('image' . $format) && function_exists('imagecreatefrom' . $format);
+    }
+
+    /**
+     * GD without libwebp, or ImageMagick without the WebP delegate, cannot exercise these paths.
+     *
+     * @param \Magento\Framework\Image\Adapter\AdapterInterface $adapter
+     * @param string $image
+     * @return void
+     */
+    private function skipUnlessWebpIsWritable($adapter, $image): void
+    {
+        if (!function_exists('imagecreatefromwebp') || !function_exists('imagewebp')) {
+            $this->markTestSkipped('This PHP build has no GD WebP support.');
+        }
+        if ($adapter instanceof \Magento\Framework\Image\Adapter\ImageMagick
+            && empty(\Imagick::queryFormats('WEBP'))
+        ) {
+            $this->markTestSkipped('This ImageMagick build has no WebP delegate.');
+        }
+        if (!file_exists($image)) {
+            $this->markTestSkipped('Fixture is missing: ' . $image);
+        }
     }
 }

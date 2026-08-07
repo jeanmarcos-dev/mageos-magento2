@@ -160,6 +160,15 @@ class ImageMagick extends AbstractAdapter
         $fileName = $this->_prepareDestination($destination, $newName);
 
         $this->_applyOptions();
+        if ($this->outputFormat !== null) {
+            $imagickFormat = strtoupper($this->outputFormat->getName());
+            if (empty(\Imagick::queryFormats($imagickFormat))) {
+                throw new LocalizedException(
+                    __('ImageMagick has no delegate for the %1 format.', $imagickFormat)
+                );
+            }
+            $this->_imageHandler->setImageFormat($imagickFormat);
+        }
         $this->_imageHandler->stripImage();
         $this->_imageHandler->writeImage($fileName);
     }
@@ -172,7 +181,11 @@ class ImageMagick extends AbstractAdapter
     protected function _applyOptions()
     {
         $this->_imageHandler->setImageCompressionQuality((int)$this->quality());
-        $this->_imageHandler->setImageCompression(\Imagick::COMPRESSION_JPEG);
+        // WebP and AVIF carry their own encoders; forcing JPEG compression on them yields a
+        // container whose declared compression contradicts its payload.
+        if (!in_array($this->getEffectiveImageType(), [IMAGETYPE_WEBP, IMAGETYPE_AVIF], true)) {
+            $this->_imageHandler->setImageCompression(\Imagick::COMPRESSION_JPEG);
+        }
         $this->_imageHandler->setImageUnits(\Imagick::RESOLUTION_PIXELSPERINCH);
         $this->_imageHandler->setImageResolution(
             $this->_options['resolution']['x'],

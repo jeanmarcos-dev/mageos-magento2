@@ -8,9 +8,12 @@ declare(strict_types=1);
 namespace Magento\Framework\Image\Adapter;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Directory\Write;
+use Magento\Framework\Image\Format\FormatInterface;
+use Magento\Framework\Image\Format\FormatProviderInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -20,7 +23,7 @@ use Psr\Log\LoggerInterface;
  * @api
  * @SuppressWarnings(PHPMD.TooManyFields)
  */
-abstract class AbstractAdapter implements AdapterInterface
+abstract class AbstractAdapter implements AdapterInterface, OutputFormatAwareInterface
 {
     /**
      * Background color
@@ -56,6 +59,16 @@ abstract class AbstractAdapter implements AdapterInterface
      * @var  int
      */
     protected $_fileType;
+
+    /**
+     * @var FormatProviderInterface|null
+     */
+    private $formatProvider;
+
+    /**
+     * @var FormatInterface|null
+     */
+    protected $outputFormat;
 
     /**
      * @var  string
@@ -275,16 +288,80 @@ abstract class AbstractAdapter implements AdapterInterface
      * @param Filesystem $filesystem
      * @param LoggerInterface $logger
      * @param array $data
+     * @param FormatProviderInterface|null $formatProvider
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function __construct(
         Filesystem $filesystem,
         LoggerInterface $logger,
-        array $data = []
+        array $data = [],
+        ?FormatProviderInterface $formatProvider = null
     ) {
         $this->_filesystem = $filesystem;
         $this->logger = $logger;
         $this->directoryWrite = $this->_filesystem->getDirectoryWrite(DirectoryList::ROOT);
+        $this->formatProvider = $formatProvider;
+    }
+
+    /**
+     * Retrieve the format registry, resolving it on first use
+     *
+     * Third party adapters predate this dependency and call the parent constructor without it,
+     * so it cannot be required up front.
+     *
+     * @return FormatProviderInterface
+     */
+    protected function getFormatProvider(): FormatProviderInterface
+    {
+        if ($this->formatProvider === null) {
+            $this->formatProvider = ObjectManager::getInstance()->get(FormatProviderInterface::class);
+        }
+
+        return $this->formatProvider;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setOutputFormat(?string $formatName): void
+    {
+        if ($formatName === null) {
+            $this->outputFormat = null;
+
+            return;
+        }
+
+        $provider = $this->getFormatProvider();
+        $format = $provider->getByExtension($formatName) ?? $provider->get($formatName);
+        if ($format === null) {
+            throw new \InvalidArgumentException(sprintf('Unknown image format "%s".', $formatName));
+        }
+
+        $this->outputFormat = $format;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getOutputFormat(): ?FormatInterface
+    {
+        return $this->outputFormat;
+    }
+
+    /**
+     * Retrieve the image type the next save has to encode with
+     *
+     * @return int|null
+     */
+    protected function getEffectiveImageType(): ?int
+    {
+        if ($this->outputFormat !== null) {
+            return $this->outputFormat->getImageType();
+        }
+
+        $fileType = $this->getImageType();
+
+        return $fileType === null ? null : (int) $fileType;
     }
 
     /**
@@ -667,7 +744,7 @@ abstract class AbstractAdapter implements AdapterInterface
      */
     public function getSupportedFormats()
     {
-        return ['gif', 'jpeg', 'jpg', 'png'];
+        return $this->getFormatProvider()->getExtensions();
     }
 
     /**
