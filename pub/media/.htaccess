@@ -27,6 +27,24 @@ SetHandler default-handler
     #RewriteBase /magento/pub/media/
 
 ############################################
+## Uncomment the blocks below to hand a generated AVIF or WebP copy of a catalog image to browsers
+## that accept it, falling back to the original otherwise. Pair it with Stores > Configuration >
+## Catalog > Catalog > Image Optimization > "Generate Additional Formats for Catalog Images"; with
+## that setting off no copy exists and the rules never match.
+## AVIF comes first so it wins when the browser accepts both; each rule ends with [L] so the other
+## one is not evaluated afterwards.
+## The "Vary: Accept" header further down is required, otherwise a shared cache may hand a copy to
+## a client that cannot read it.
+
+#   RewriteCond %{HTTP_ACCEPT} image/avif
+#   RewriteCond %{REQUEST_FILENAME}\.avif -f
+#   RewriteRule ^(.+)$ $1.avif [T=image/avif,L]
+
+#   RewriteCond %{HTTP_ACCEPT} image/webp
+#   RewriteCond %{REQUEST_FILENAME}\.webp -f
+#   RewriteRule ^(.+)$ $1.webp [T=image/webp,L]
+
+############################################
 ## never rewrite for existing files
     RewriteCond %{REQUEST_FILENAME} !-f
 
@@ -58,6 +76,16 @@ AddType image/avif-sequence avifs
 
 # SVG
 AddType image/svg+xml svg svgz
+
+############################################
+## Required alongside the WebP negotiation rule above: it tells shared caches that the response
+## body depends on the request Accept header. Uncomment it together with that rule.
+
+#<IfModule mod_headers.c>
+#   <FilesMatch \.(gif|png|jpg|jpeg)$>
+#       Header append Vary Accept
+#   </FilesMatch>
+#</IfModule>
 
 # Fonts
 AddType application/vnd.ms-fontobject eot

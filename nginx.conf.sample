@@ -174,6 +174,40 @@ location /media/ {
         add_header Cache-Control "public";
         add_header X-Frame-Options "SAMEORIGIN";
         expires +1y;
+
+## To hand a generated AVIF or WebP copy of a catalog image to browsers that accept it, falling back
+## to the original otherwise, pair Stores > Configuration > Catalog > Catalog > Image Optimization >
+## "Generate Additional Formats for Catalog Images" with two changes here.
+##
+## First, add these maps to the http context of your nginx configuration — not to this file, which is
+## included inside a server block, and a map is only valid at http level:
+##
+##     map $http_accept $avif_suffix {
+##         default         ".unsupported";
+##         "~*image/avif"  ".avif";
+##     }
+##     map $http_accept $webp_suffix {
+##         default         ".unsupported";
+##         "~*image/webp"  ".webp";
+##     }
+##
+## Then REPLACE the try_files line below with the two commented lines. Keep only one try_files
+## directive in this location. The order expresses the preference: AVIF, then WebP, then the
+## original.
+##
+## The default value must be a suffix that can never name a real file. Leaving it empty looks
+## harmless but breaks the chain: the candidate then collapses to $uri, which does exist, so
+## try_files stops there and a browser that accepts WebP but not AVIF is served the original.
+##
+## Do not be tempted to set these from an `if` inside this location instead of the maps: the variable
+## ends up set correctly but try_files still serves the original file, which is the kind of breakage
+## https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#if warns about.
+##
+## "Vary: Accept" is required, otherwise a shared cache may hand a copy to a client that cannot
+## read it.
+#       add_header Vary Accept;
+#       try_files $uri$avif_suffix $uri$webp_suffix $uri $uri/ /get.php$is_args$args;
+
         try_files $uri $uri/ /get.php$is_args$args;
     }
     location ~* \.(zip|gz|gzip|bz2|csv|xml)$ {
