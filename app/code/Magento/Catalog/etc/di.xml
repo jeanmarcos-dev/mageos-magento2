@@ -232,12 +232,16 @@
                 <item name="jpeg" xsi:type="string">jpeg</item>
                 <item name="gif" xsi:type="string">gif</item>
                 <item name="png" xsi:type="string">png</item>
+                <item name="webp" xsi:type="string">webp</item>
+                <item name="avif" xsi:type="string">avif</item>
             </argument>
             <argument name="allowedMimeTypes" xsi:type="array">
                 <item name="jpg" xsi:type="string">image/jpg</item>
                 <item name="jpeg" xsi:type="string">image/jpeg</item>
                 <item name="gif" xsi:type="string">image/gif</item>
                 <item name="png" xsi:type="string">image/png</item>
+                <item name="webp" xsi:type="string">image/webp</item>
+                <item name="avif" xsi:type="string">image/avif</item>
             </argument>
         </arguments>
     </virtualType>
@@ -1402,6 +1406,22 @@
         <arguments>
             <argument name="imageContentProcessor" xsi:type="object">Magento\Catalog\Model\Product\Option\Type\File\ImageContentProcessor\Proxy</argument>
             <argument name="productRepository" xsi:type="object">Magento\Catalog\Api\ProductRepositoryInterface\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Magento\Catalog\Model\Product\Image\VariantConfig">
+        <arguments>
+            <argument name="defaultQuality" xsi:type="array">
+                <item name="webp" xsi:type="number">80</item>
+                <item name="avif" xsi:type="number">50</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Catalog\Model\Config\Source\Image\VariantFormat">
+        <arguments>
+            <argument name="candidates" xsi:type="array">
+                <item name="webp" xsi:type="string">webp</item>
+                <item name="avif" xsi:type="string">avif</item>
+            </argument>
         </arguments>
     </type>
 </config>

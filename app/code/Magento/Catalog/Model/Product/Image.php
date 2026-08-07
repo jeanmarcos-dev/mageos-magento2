@@ -7,6 +7,7 @@ namespace Magento\Catalog\Model\Product;
 
 use Magento\Catalog\Model\Product\Image\NotLoadInfoImageException;
 use Magento\Catalog\Model\Product\Image\ParamsBuilder;
+use Magento\Catalog\Model\Product\Image\VariantGenerator;
 use Magento\Catalog\Model\View\Asset\ImageFactory;
 use Magento\Catalog\Model\View\Asset\PlaceholderFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -204,6 +205,11 @@ class Image extends \Magento\Framework\Model\AbstractModel
     private $serializer;
 
     /**
+     * @var VariantGenerator
+     */
+    private $variantGenerator;
+
+    /**
      * Constructor
      *
      * @param \Magento\Framework\Model\Context $context
@@ -223,6 +229,7 @@ class Image extends \Magento\Framework\Model\AbstractModel
      * @param array $data
      * @param SerializerInterface $serializer
      * @param ParamsBuilder $paramsBuilder
+     * @param VariantGenerator|null $variantGenerator
      * @throws \Magento\Framework\Exception\FileSystemException
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      * @SuppressWarnings(PHPMD.UnusedLocalVariable)
@@ -244,7 +251,8 @@ class Image extends \Magento\Framework\Model\AbstractModel
         ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [],
         ?SerializerInterface $serializer = null,
-        ?ParamsBuilder $paramsBuilder = null
+        ?ParamsBuilder $paramsBuilder = null,
+        ?VariantGenerator $variantGenerator = null
     ) {
         $this->_storeManager = $storeManager;
         $this->_catalogProductMediaConfig = $catalogProductMediaConfig;
@@ -259,6 +267,8 @@ class Image extends \Magento\Framework\Model\AbstractModel
         $this->viewAssetPlaceholderFactory = $viewAssetPlaceholderFactory;
         $this->serializer = $serializer ?: ObjectManager::getInstance()->get(SerializerInterface::class);
         $this->paramsBuilder = $paramsBuilder ?: ObjectManager::getInstance()->get(ParamsBuilder::class);
+        $this->variantGenerator = $variantGenerator
+            ?: ObjectManager::getInstance()->get(VariantGenerator::class);
     }
 
     /**
@@ -626,7 +636,11 @@ class Image extends \Magento\Framework\Model\AbstractModel
         }
         $filename = $this->getBaseFile() ? $this->imageAsset->getPath() : null;
         $this->getImageProcessor()->save($filename);
+        $variants = $this->variantGenerator->execute($filename);
         $this->_coreFileStorageDatabase->saveFile($filename);
+        foreach ($variants as $variant) {
+            $this->_coreFileStorageDatabase->saveFile($variant);
+        }
         return $this;
     }
 

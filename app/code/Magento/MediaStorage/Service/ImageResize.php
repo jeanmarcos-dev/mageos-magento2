@@ -10,6 +10,7 @@ namespace Magento\MediaStorage\Service;
 use Generator;
 use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Catalog\Model\Product\Image\ParamsBuilder;
+use Magento\Catalog\Model\Product\Image\VariantGenerator;
 use Magento\Catalog\Model\View\Asset\ImageFactory as AssertImageFactory;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\ObjectManager;
@@ -92,6 +93,11 @@ class ImageResize
     private $fileStorageDatabase;
 
     /**
+     * @var VariantGenerator
+     */
+    private $variantGenerator;
+
+    /**
      * @var StoreManagerInterface
      */
     private $storeManager;
@@ -114,6 +120,7 @@ class ImageResize
      * @param Filesystem $filesystem
      * @param FileStorageDatabase $fileStorageDatabase
      * @param StoreManagerInterface $storeManager
+     * @param VariantGenerator|null $variantGenerator
      * @throws \Magento\Framework\Exception\FileSystemException
      * @internal param ProductImage $gallery
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -130,7 +137,8 @@ class ImageResize
         ThemeCollection $themeCollection,
         Filesystem $filesystem,
         ?FileStorageDatabase $fileStorageDatabase = null,
-        ?StoreManagerInterface $storeManager = null
+        ?StoreManagerInterface $storeManager = null,
+        ?VariantGenerator $variantGenerator = null
     ) {
         $this->appState = $appState;
         $this->imageConfig = $imageConfig;
@@ -145,6 +153,8 @@ class ImageResize
         $this->fileStorageDatabase = $fileStorageDatabase ?:
             ObjectManager::getInstance()->get(FileStorageDatabase::class);
         $this->storeManager = $storeManager ?? ObjectManager::getInstance()->get(StoreManagerInterface::class);
+        $this->variantGenerator = $variantGenerator
+            ?? ObjectManager::getInstance()->get(VariantGenerator::class);
     }
 
     /**
@@ -424,9 +434,13 @@ class ImageResize
         }
 
         $image->save($imageAssetPath);
+        $variants = $this->variantGenerator->execute($imageAssetPath);
 
         if ($usingDbAsStorage) {
             $this->fileStorageDatabase->saveFile($mediaStorageFilename);
+            foreach ($variants as $variant) {
+                $this->fileStorageDatabase->saveFile($this->mediaDirectory->getRelativePath($variant));
+            }
         }
     }
 

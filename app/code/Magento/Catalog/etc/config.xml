@@ -11,6 +11,11 @@
             <navigation>
                 <max_depth>0</max_depth>
             </navigation>
+            <image>
+                <variant_formats/>
+                <webp_quality>80</webp_quality>
+                <avif_quality>50</avif_quality>
+            </image>
             <recently_products>
                 <recently_viewed_lifetime>1000</recently_viewed_lifetime>
                 <recently_compared_lifetime>1000</recently_compared_lifetime>

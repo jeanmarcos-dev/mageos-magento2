@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Magento\MediaStorage\Test\Unit\Service;
 
 use Magento\Catalog\Model\Product\Image\ParamsBuilder;
+use Magento\Catalog\Model\Product\Image\VariantGenerator;
 use Magento\Catalog\Model\Product\Media\ConfigInterface as MediaConfig;
 use Magento\Catalog\Model\ResourceModel\Product\Image as ProductImage;
 use Magento\Catalog\Model\View\Asset\Image as AssetImage;
@@ -132,6 +133,11 @@ class ImageResizeTest extends TestCase
     private $storeManager;
 
     /**
+     * @var VariantGenerator|MockObject
+     */
+    private $variantGeneratorMock;
+
+    /**
      * @var string
      */
     private $testImageHiddenfilepath;
@@ -157,6 +163,8 @@ class ImageResizeTest extends TestCase
         $this->filesystemMock = $this->createMock(Filesystem::class);
         $this->databaseMock = $this->createMock(Database::class);
         $this->storeManager = $this->createMock(StoreManagerInterface::class);
+        $this->variantGeneratorMock = $this->createMock(VariantGenerator::class);
+        $this->variantGeneratorMock->method('execute')->willReturn([]);
         $this->mediaDirectoryMock = $this->createMock(WriteInterface::class);
 
         $this->filesystemMock->expects($this->any())
@@ -225,7 +233,8 @@ class ImageResizeTest extends TestCase
             $this->themeCollectionMock,
             $this->filesystemMock,
             $this->databaseMock,
-            $this->storeManager
+            $this->storeManager,
+            $this->variantGeneratorMock
         );
     }
 

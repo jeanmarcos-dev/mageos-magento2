@@ -119,6 +119,25 @@
                     <base_url type="media" scope_info="1">catalog/product/placeholder</base_url>
                 </field>
             </group>
+            <group id="image" translate="label" type="text" sortOrder="310" showInDefault="1">
+                <label>Image Optimization</label>
+                <field id="variant_formats" translate="label comment" type="multiselect" sortOrder="10" showInDefault="1" canRestore="1">
+                    <label>Generate Additional Formats for Catalog Images</label>
+                    <source_model>Magento\Catalog\Model\Config\Source\Image\VariantFormat</source_model>
+                    <can_be_empty>1</can_be_empty>
+                    <comment><![CDATA[Writes an additional copy of every cached catalog image, named <code>&lt;image&gt;.webp</code> or <code>&lt;image&gt;.avif</code>. Serving it requires the web server to pick the copy based on the browser <code>Accept</code> header; see the <code>nginx.conf.sample</code> and <code>pub/media/.htaccess</code> examples. Regenerating existing images requires <code>bin/magento catalog:images:resize</code>. AVIF encodes considerably slower than WebP, which matters on a large catalog.]]></comment>
+                </field>
+                <field id="webp_quality" translate="label comment" type="text" sortOrder="20" showInDefault="1" canRestore="1">
+                    <label>WebP Quality</label>
+                    <validate>validate-digits validate-digits-range digits-range-1-100</validate>
+                    <comment>From 1 to 100. WebP reaches a comparable perceived quality at a lower value than JPEG.</comment>
+                </field>
+                <field id="avif_quality" translate="label comment" type="text" sortOrder="30" showInDefault="1" canRestore="1">
+                    <label>AVIF Quality</label>
+                    <validate>validate-digits validate-digits-range digits-range-1-100</validate>
+                    <comment>From 1 to 100. AVIF needs a markedly lower value than JPEG or WebP for the same perceived quality.</comment>
+                </field>
+            </group>
             <group id="seo" translate="label" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Search Engine Optimization</label>
                 <field id="product_url_transliteration" translate="label" type="select" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
