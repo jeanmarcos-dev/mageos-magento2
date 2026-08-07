@@ -125,7 +125,7 @@
                     <label>Generate Additional Formats for Catalog Images</label>
                     <source_model>Magento\Catalog\Model\Config\Source\Image\VariantFormat</source_model>
                     <can_be_empty>1</can_be_empty>
-                    <comment><![CDATA[Writes an additional copy of every cached catalog image, named <code>&lt;image&gt;.webp</code> or <code>&lt;image&gt;.avif</code>. Serving it requires the web server to pick the copy based on the browser <code>Accept</code> header; see the <code>nginx.conf.sample</code> and <code>pub/media/.htaccess</code> examples. Regenerating existing images requires <code>bin/magento catalog:images:resize</code>. AVIF encodes considerably slower than WebP, which matters on a large catalog.]]></comment>
+                    <comment><![CDATA[Writes an additional copy of every cached catalog image, named <code>&lt;image&gt;.webp</code> or <code>&lt;image&gt;.avif</code>. Serving it requires the web server to pick the copy based on the browser <code>Accept</code> header; see the <code>nginx.conf.sample</code> and <code>pub/media/.htaccess</code> examples. Regenerating existing images requires <code>bin/magento catalog:images:resize</code>. AVIF encodes considerably slower than WebP, which matters on a large catalog. With <code>Use Database to Store Media Files</code> enabled the copies are still generated and stored, but a node that does not hold them on disk serves the original instead.]]></comment>
                 </field>
                 <field id="webp_quality" translate="label comment" type="text" sortOrder="20" showInDefault="1" canRestore="1">
                     <label>WebP Quality</label>
