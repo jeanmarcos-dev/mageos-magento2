@@ -7,7 +7,6 @@ namespace Magento\Setup\Module\Di\App\Task\Operation;
 
 use Magento\Setup\Module\Di\App\Task\OperationInterface;
 use Magento\Framework\App;
-use Magento\Framework\ObjectManager\Config\Compiled as CompiledConfig;
 use Magento\Framework\ObjectManager\ConfigLoaderInterface;
 use Magento\Setup\Module\Di\Compiler\Config;
 use Magento\Setup\Module\Di\Definition\Collection as DefinitionsCollection;
@@ -125,7 +124,7 @@ class Area implements OperationInterface
         $diff = [ConfigLoaderInterface::EXTENDS_KEY => App\Area::AREA_GLOBAL];
 
         foreach ($config as $section => $values) {
-            if (!is_array($values) || !in_array($section, CompiledConfig::MERGED_SECTIONS, true)) {
+            if (!is_array($values)) {
                 $diff[$section] = $values;
                 continue;
             }
