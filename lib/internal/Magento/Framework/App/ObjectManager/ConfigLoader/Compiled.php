@@ -13,6 +13,8 @@ use Magento\Framework\ObjectManager\ConfigLoaderInterface;
  */
 class Compiled implements ConfigLoaderInterface
 {
+    public const EXTENDS_KEY = '_extends';
+
     /**
      * Global config
      *
@@ -22,15 +24,61 @@ class Compiled implements ConfigLoaderInterface
 
     /**
      * @inheritdoc
+     * @throws \LogicException
      */
     public function load($area)
     {
-        if (isset($this->configCache[$area])) {
-            return $this->configCache[$area];
+        $diConfiguration = $this->loadFile($area);
+        $base = $diConfiguration[self::EXTENDS_KEY] ?? null;
+        if ($base === null) {
+            return $diConfiguration;
         }
-        $diConfiguration = include(self::getFilePath($area));
-        $this->configCache[$area] = $diConfiguration;
+
+        $baseConfiguration = $this->loadFile($base);
+        if (isset($baseConfiguration[self::EXTENDS_KEY])) {
+            throw new \LogicException(sprintf(
+                'The compiled DI configuration of "%s" extends "%s", which is not a complete configuration.',
+                $area,
+                $base
+            ));
+        }
+
+        return self::merge($baseConfiguration, $diConfiguration);
+    }
+
+    /**
+     * Returns the contents of a compiled configuration file
+     *
+     * @param string $area
+     * @return array
+     */
+    private function loadFile($area)
+    {
+        if (!isset($this->configCache[$area])) {
+            $this->configCache[$area] = include self::getFilePath($area);
+        }
+
         return $this->configCache[$area];
+    }
+
+    /**
+     * Applies a configuration on top of another one, per top-level key of every section
+     *
+     * @param array $base
+     * @param array $diConfiguration
+     * @return array
+     */
+    private static function merge(array $base, array $diConfiguration)
+    {
+        unset($diConfiguration[self::EXTENDS_KEY]);
+
+        foreach ($diConfiguration as $section => $values) {
+            $base[$section] = is_array($values) && is_array($base[$section] ?? null)
+                ? array_replace($base[$section], $values)
+                : $values;
+        }
+
+        return $base;
     }
 
     /**
